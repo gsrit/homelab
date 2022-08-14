@@ -16,6 +16,7 @@ Opensource/Free (With Limitations) options for setting up a Homelab.
 9. Private Git Repository  :  		  Gitlab
 10. Configuration Management  : 		  Ansible
 11. Cloud Monitoring (Agent Based)  : 	Datadog (Limited Services are free forever)
+12. Free DNS Server and Ad Blocking- PiHole
 
 
 ---------------------------------------------------------------------------------------------------------
