@@ -8,6 +8,9 @@ const char* slackWebhookUrl = "https://hooks.slack.com/services/T03NWCF27CL/B05U
 const int trigPin = 5;  // D1
 const int echoPin = 4;  // D2
 
+unsigned long previousMillis = 0;
+const long interval = 10000;  // Interval to send data (milliseconds)
+
 void setup() {
   Serial.begin(115200);
   pinMode(trigPin, OUTPUT);
@@ -22,46 +25,52 @@ void setup() {
 }
 
 void loop() {
-  long duration, distance;
+  unsigned long currentMillis = millis();
 
-  // Clear the trigPin
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
 
-  // Set the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
+    long duration, distance;
 
-  // Read the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
+    // Clear the trigPin
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
 
-  // Calculate the distance
-  distance = (duration * 0.034) / 2;  // Speed of sound wave divided by 2 (go and back)
+    // Set the trigPin on HIGH state for 10 micro seconds
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
 
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
+    // Read the echoPin, returns the sound wave travel time in microseconds
+    duration = pulseIn(echoPin, HIGH);
 
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(slackWebhookUrl);
-    http.addHeader("Content-Type", "application/json");
+    // Calculate the distance
+    distance = (duration * 0.034) / 2;  // Speed of sound wave divided by 2 (go and back)
 
-    String payload = "{\"text\":\"Distance: " + String(distance) + " cm\"}";
-    int httpResponseCode = http.POST(payload);
+    Serial.print("Distance: ");
+    Serial.print(distance);
+    Serial.println(" cm");
 
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      Serial.println(httpResponseCode);
-      Serial.println(response);
+    if (WiFi.status() == WL_CONNECTED) {
+      HTTPClient http;
+      http.begin(slackWebhookUrl);
+      http.addHeader("Content-Type", "application/json");
+
+      String payload = "{\"text\":\"Distance: " + String(distance) + " cm\"}";
+      int httpResponseCode = http.POST(payload);
+
+      if (httpResponseCode > 0) {
+        String response = http.getString();
+        Serial.println(httpResponseCode);
+        Serial.println(response);
+      } else {
+        Serial.print("Error on sending POST: ");
+        Serial.println(httpResponseCode);
+      }
+
+      http.end();
     } else {
-      Serial.print("Error on sending POST: ");
-      Serial.println(httpResponseCode);
+      Serial.println("WiFi Disconnected");
     }
-
-    http.end();
   }
-
-  delay(10000);  // Send data every 10 seconds
 }
